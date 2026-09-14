@@ -17,7 +17,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(siteConfig.url),
+  metadataBase: new URL(siteConfig.url || "https://meyunarvu.vercel.app"),
   title: {
     default: siteConfig.name,
     template: `%s — ${siteConfig.name}`,
