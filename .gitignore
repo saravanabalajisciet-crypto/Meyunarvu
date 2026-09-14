@@ -39,3 +39,14 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+.neon
+
+# Password update utility (may contain plaintext password in some versions)
+write-env.mjs
+
+# Prisma/Neon agent skills (auto-generated, not needed in repo)
+.agents/
+.claude/
+.cursor/
+.devin/
+skills-lock.json

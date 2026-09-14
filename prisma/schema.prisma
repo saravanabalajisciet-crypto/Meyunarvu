@@ -1,0 +1,169 @@
+// Meyunarvu — Prisma Schema
+// Phase 1: publishing workflow
+// Phase 2 tables (Manuscript, Chapter) are defined but have no UI yet.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Enums
+// ---------------------------------------------------------------------------
+
+enum PostStatus {
+  draft
+  published
+}
+
+enum PostType {
+  article
+  thirukkural
+  letter
+  business_idea
+  linkedin_post
+}
+
+// ---------------------------------------------------------------------------
+// Core content tables
+// ---------------------------------------------------------------------------
+
+model Post {
+  id          String     @id @default(uuid())
+  title       String
+  // slug is set once on creation — the API ignores slug in PATCH requests
+  slug        String     @unique
+  content     String?    // Markdown
+  excerpt     String?    // manual or trimmed on publish
+  status      PostStatus @default(draft)
+  type        PostType   @default(article)
+  publishedAt DateTime?
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  categoryId String?
+  category   Category? @relation(fields: [categoryId], references: [id])
+
+  tags             PostTag[]
+  images           Image[]
+  thirukkuralMeta  ThirukkuralMeta?
+  letterMeta       LetterMeta?
+  linkedInMeta     LinkedInMeta?
+  businessIdeaMeta BusinessIdeaMeta?
+}
+
+model Category {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  slug        String   @unique
+  description String?
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+
+  posts Post[]
+}
+
+model Tag {
+  id    String    @id @default(uuid())
+  name  String    @unique
+  slug  String    @unique
+  posts PostTag[]
+}
+
+model PostTag {
+  postId String
+  tagId  String
+  post   Post   @relation(fields: [postId], references: [id], onDelete: Cascade)
+  tag    Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([postId, tagId])
+}
+
+model Image {
+  id           String   @id @default(uuid())
+  postId       String
+  url          String
+  storageKey   String   // provider-specific key used for deletion
+  altText      String?
+  displayOrder Int      @default(0)
+  createdAt    DateTime @default(now())
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+}
+
+// ---------------------------------------------------------------------------
+// Post-type companion tables (1:1 with Post)
+// ---------------------------------------------------------------------------
+
+model ThirukkuralMeta {
+  id                 String  @id @default(uuid())
+  postId             String  @unique
+  tamilCouplet       String
+  englishTranslation String
+  tamilCommentary    String?
+  englishCommentary  String?
+  kuralNumber        Int?    @unique
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+}
+
+model LetterMeta {
+  id             String    @id @default(uuid())
+  postId         String    @unique
+  recipient      String?
+  letterDate     DateTime?
+  responseStatus String?
+  letterContent  String?
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+}
+
+model LinkedInMeta {
+  id           String    @id @default(uuid())
+  postId       String    @unique
+  linkedInUrl  String    // canonical source; displayed as backlink
+  originalDate DateTime?
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+}
+
+model BusinessIdeaMeta {
+  id            String @id @default(uuid())
+  postId        String @unique
+  freeUseNotice String @default("These ideas are free for anyone to take and build. No attribution or credit required.")
+
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+}
+
+// ---------------------------------------------------------------------------
+// Phase 2 — manuscripts (schema present, no UI in Phase 1)
+// ---------------------------------------------------------------------------
+
+model Manuscript {
+  id             String    @id @default(uuid())
+  title          String
+  slug           String    @unique
+  passphraseHash String
+  isPublic       Boolean   @default(false)
+  createdAt      DateTime  @default(now())
+
+  chapters Chapter[]
+}
+
+model Chapter {
+  id           String     @id @default(uuid())
+  manuscriptId String
+  title        String?
+  slug         String
+  content      String?    // Markdown
+  displayOrder Int        @default(0)
+  createdAt    DateTime   @default(now())
+
+  manuscript Manuscript @relation(fields: [manuscriptId], references: [id], onDelete: Cascade)
+
+  @@unique([manuscriptId, slug])
+}
