@@ -50,3 +50,6 @@ write-env.mjs
 .cursor/
 .devin/
 skills-lock.json
+
+.vercel
+.env*
