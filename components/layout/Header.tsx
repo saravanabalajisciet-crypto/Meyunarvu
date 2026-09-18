@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { siteConfig } from "@/config/site";
 import { prisma } from "@/lib/prisma";
+import MobileNav from "@/components/layout/MobileNav";
 
 async function getCategories() {
   return prisma.category.findMany({
@@ -15,9 +16,12 @@ export default async function Header() {
   return (
     <header className="bg-white border-b border-stone-100 sticky top-0 z-40">
       <div className="mx-auto max-w-5xl px-4 sm:px-6">
+        <div className="flex items-center h-16 gap-4">
 
-        {/* Top row: wordmark + author */}
-        <div className="flex items-center justify-between h-16">
+          {/* Hamburger — top-left */}
+          <MobileNav categories={categories} />
+
+          {/* Wordmark — centre on mobile, left on desktop */}
           <Link
             href="/"
             className="font-serif text-xl font-bold tracking-tight text-stone-900 hover:text-brand transition-colors duration-150"
@@ -25,6 +29,10 @@ export default async function Header() {
             {siteConfig.name}
           </Link>
 
+          {/* Spacer */}
+          <div className="flex-1" />
+
+          {/* Author / admin link — hidden on small screens */}
           <Link
             href="/admin"
             className="hidden sm:block text-sm font-sans text-stone-400 hover:text-brand tracking-wide transition-colors duration-150"
@@ -32,27 +40,6 @@ export default async function Header() {
             {siteConfig.authorName}
           </Link>
         </div>
-
-        {/* Category nav row */}
-        {categories.length > 0 && (
-          <nav
-            aria-label="Site sections"
-            className="overflow-x-auto pb-0 -mb-px"
-          >
-            <ul className="flex items-center gap-0.5 whitespace-nowrap">
-              {categories.map((cat) => (
-                <li key={cat.slug}>
-                  <Link
-                    href={`/${cat.slug}`}
-                    className="inline-block px-3 py-2.5 text-sm font-sans text-stone-500 hover:text-stone-900 hover:bg-stone-50 rounded-sm transition-colors duration-150 border-b-2 border-transparent hover:border-brand"
-                  >
-                    {cat.name}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </nav>
-        )}
       </div>
     </header>
   );
