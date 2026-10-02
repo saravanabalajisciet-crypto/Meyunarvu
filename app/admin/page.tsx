@@ -6,10 +6,12 @@ import PostRow from "@/components/admin/PostRow";
 export const dynamic = "force-dynamic";
 
 async function getDashboardData() {
-  const [totalPosts, published, drafts, recentPosts] = await Promise.all([
+  const [totalPosts, published, drafts, totalUsers, totalComments, recentPosts] = await Promise.all([
     prisma.post.count(),
     prisma.post.count({ where: { status: "published" } }),
     prisma.post.count({ where: { status: "draft" } }),
+    prisma.user.count(),
+    prisma.comment.count(),
     prisma.post.findMany({
       orderBy: { updatedAt: "desc" },
       take: 20,
@@ -20,12 +22,12 @@ async function getDashboardData() {
       },
     }),
   ]);
-  return { totalPosts, published, drafts, recentPosts };
+  return { totalPosts, published, drafts, totalUsers, totalComments, recentPosts };
 }
 
 export default async function AdminDashboard() {
   await requireAdmin();
-  const { totalPosts, published, drafts, recentPosts } = await getDashboardData();
+  const { totalPosts, published, drafts, totalUsers, totalComments, recentPosts } = await getDashboardData();
 
   return (
     <div className="max-w-3xl mx-auto">
@@ -45,11 +47,13 @@ export default async function AdminDashboard() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-3 mb-8">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-8">
         {[
-          { label: "Total", value: totalPosts },
+          { label: "Total Posts", value: totalPosts },
           { label: "Published", value: published },
           { label: "Drafts", value: drafts },
+          { label: "Users", value: totalUsers },
+          { label: "Comments", value: totalComments },
         ].map((stat) => (
           <div
             key={stat.label}

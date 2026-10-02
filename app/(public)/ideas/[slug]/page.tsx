@@ -4,6 +4,9 @@ import { prisma } from "@/lib/prisma";
 import { markdownToHtml } from "@/lib/markdown";
 import { buildArticleMetadata } from "@/lib/metadata";
 import ShareBar from "@/components/posts/ShareBar";
+import FavoriteButton from "@/components/posts/FavoriteButton";
+import CommentSection from "@/components/posts/CommentSection";
+import { getSessionUser } from "@/lib/dal";
 import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
@@ -35,7 +38,10 @@ export default async function IdeaPage({ params }: Props) {
   const post = await getIdea(slug);
   if (!post) notFound();
 
-  const html = post.content ? await markdownToHtml(post.content) : "";
+  const [html, session] = await Promise.all([
+    post.content ? markdownToHtml(post.content) : Promise.resolve(""),
+    getSessionUser(),
+  ]);
   const date = post.publishedAt
     ? new Date(post.publishedAt).toLocaleDateString("en-IN", { year: "numeric", month: "long", day: "numeric" })
     : null;
@@ -60,6 +66,19 @@ export default async function IdeaPage({ params }: Props) {
       {html && <div className="prose" dangerouslySetInnerHTML={{ __html: html }} />}
 
       <ShareBar title={post.title} slug={post.slug} type="business_idea" />
+
+      {/* Favorite */}
+      <div className="mt-6 flex items-center gap-3">
+        <FavoriteButton postId={post.id} isLoggedIn={!!session} />
+      </div>
+
+      {/* Comments */}
+      <CommentSection
+        postId={post.id}
+        isLoggedIn={!!session}
+        currentUserId={session?.userId}
+        currentUserRole={session?.role}
+      />
     </article>
   );
 }

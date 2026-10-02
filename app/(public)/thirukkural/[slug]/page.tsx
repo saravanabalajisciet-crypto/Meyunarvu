@@ -5,7 +5,10 @@ import { buildArticleMetadata } from "@/lib/metadata";
 import { markdownToHtml } from "@/lib/markdown";
 import KuralDetail from "@/components/thirukkural/KuralDetail";
 import ShareBar from "@/components/posts/ShareBar";
+import FavoriteButton from "@/components/posts/FavoriteButton";
+import CommentSection from "@/components/posts/CommentSection";
 import Link from "next/link";
+import { getSessionUser } from "@/lib/dal";
 import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
@@ -38,7 +41,10 @@ export default async function KuralPage({ params }: Props) {
   if (!post || !post.thirukkuralMeta) notFound();
 
   const m = post.thirukkuralMeta;
-  const commentaryHtml = post.content ? await markdownToHtml(post.content) : null;
+  const [commentaryHtml, session] = await Promise.all([
+    post.content ? markdownToHtml(post.content) : Promise.resolve(null),
+    getSessionUser(),
+  ]);
 
   return (
     <div className="mx-auto max-w-4xl px-4 sm:px-6">
@@ -89,6 +95,19 @@ export default async function KuralPage({ params }: Props) {
         )}
 
         <ShareBar title={post.title} slug={post.slug} type="thirukkural" />
+
+        {/* Favorite */}
+        <div className="mt-6 flex items-center gap-3">
+          <FavoriteButton postId={post.id} isLoggedIn={!!session} />
+        </div>
+
+        {/* Comments */}
+        <CommentSection
+          postId={post.id}
+          isLoggedIn={!!session}
+          currentUserId={session?.userId}
+          currentUserRole={session?.role}
+        />
       </article>
     </div>
   );

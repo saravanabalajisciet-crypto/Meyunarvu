@@ -2,6 +2,8 @@ import Link from "next/link";
 import { siteConfig } from "@/config/site";
 import { prisma } from "@/lib/prisma";
 import MobileNav from "@/components/layout/MobileNav";
+import HeaderActions from "@/components/layout/HeaderActions";
+import { getSessionUser } from "@/lib/dal";
 
 async function getCategories() {
   return prisma.category.findMany({
@@ -11,7 +13,15 @@ async function getCategories() {
 }
 
 export default async function Header() {
-  const categories = await getCategories();
+  const [categories, session] = await Promise.all([
+    getCategories(),
+    getSessionUser(),
+  ]);
+
+  // Pass minimal session data to client component — never pass passwordHash or sensitive fields
+  const userForClient = session
+    ? { userId: session.userId, role: session.role }
+    : null;
 
   return (
     <header className="bg-white border-b border-stone-100 sticky top-0 z-40">
@@ -19,7 +29,7 @@ export default async function Header() {
         <div className="flex items-center h-16 gap-4">
 
           {/* Hamburger — top-left */}
-          <MobileNav categories={categories} />
+          <MobileNav categories={categories} user={userForClient} />
 
           {/* Wordmark — centre on mobile, left on desktop */}
           <Link
@@ -32,13 +42,8 @@ export default async function Header() {
           {/* Spacer */}
           <div className="flex-1" />
 
-          {/* Author / admin link — hidden on small screens */}
-          <Link
-            href="/admin"
-            className="hidden sm:block text-sm font-sans text-stone-400 hover:text-brand tracking-wide transition-colors duration-150"
-          >
-            {siteConfig.authorName}
-          </Link>
+          {/* Right-side actions: search + notifications + user menu */}
+          <HeaderActions user={userForClient} />
         </div>
       </div>
     </header>

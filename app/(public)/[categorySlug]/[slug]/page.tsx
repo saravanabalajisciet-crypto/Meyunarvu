@@ -4,8 +4,11 @@ import { prisma } from "@/lib/prisma";
 import { markdownToHtml } from "@/lib/markdown";
 import { buildArticleMetadata } from "@/lib/metadata";
 import ShareBar from "@/components/posts/ShareBar";
+import FavoriteButton from "@/components/posts/FavoriteButton";
+import CommentSection from "@/components/posts/CommentSection";
 import Badge from "@/components/ui/Badge";
 import Link from "next/link";
+import { getSessionUser } from "@/lib/dal";
 import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
@@ -42,7 +45,10 @@ export default async function ArticlePage({ params }: Props) {
   const post = await getPost(slug);
   if (!post) notFound();
 
-  const html = post.content ? await markdownToHtml(post.content) : "";
+  const [html, session] = await Promise.all([
+    post.content ? markdownToHtml(post.content) : Promise.resolve(""),
+    getSessionUser(),
+  ]);
   const date = post.publishedAt
     ? new Date(post.publishedAt).toLocaleDateString("en-IN", {
         year: "numeric", month: "long", day: "numeric",
@@ -128,6 +134,19 @@ export default async function ArticlePage({ params }: Props) {
           slug={post.slug}
           type={post.type}
           categorySlug={post.category?.slug}
+        />
+
+        {/* Favorite */}
+        <div className="mt-6 flex items-center gap-3">
+          <FavoriteButton postId={post.id} isLoggedIn={!!session} />
+        </div>
+
+        {/* Comments */}
+        <CommentSection
+          postId={post.id}
+          isLoggedIn={!!session}
+          currentUserId={session?.userId}
+          currentUserRole={session?.role}
         />
       </article>
     </div>

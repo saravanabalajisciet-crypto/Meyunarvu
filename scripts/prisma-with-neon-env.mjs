@@ -1,12 +1,11 @@
 /**
- * Helper: injects env vars then runs a Prisma CLI command.
+ * Helper: injects Neon DATABASE_URL + Vercel auth env vars then runs a Prisma CLI command.
  *
- * Env var resolution order (last wins):
- *   1. process.env (current shell)
- *   2. .env.seed   (production vars pulled via `vercel env pull --environment production`)
- *   3. neon-env export (live Neon DB URLs — these override .env.seed DATABASE_URL)
+ * DATABASE_URL resolution (first that works):
+ *   1. neon-env export (uses OIDC token — works when vercel dev has been run recently)
+ *   2. neon connection-string (uses cached neon CLI OAuth — longer-lived)
  *
- * .env.seed is optional — if absent, only neon-env is used for DB vars.
+ * Other env vars (AUTH_*, SESSION_SECRET, etc.) come from .env.seed if present.
  *
  * Usage:
  *   node scripts/prisma-with-neon-env.mjs migrate status
@@ -20,40 +19,58 @@ import { resolve } from "path";
 
 const root = new URL("..", import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, "$1");
 
-// ── Step 1: parse .env.seed if present ────────────────────────────────────
+// ── Parse .env.seed for non-DB vars ───────────────────────────────────────
 const seedEnvPath = resolve(root, ".env.seed");
 const fileEnv = {};
 if (existsSync(seedEnvPath)) {
   const lines = readFileSync(seedEnvPath, "utf8").split("\n");
   for (const line of lines) {
-    // Support both KEY=VALUE and KEY="VALUE"
-    const match = line.match(/^([A-Z0-9_]+)=("?)([^\n]*)\2\s*$/);
-    if (match) fileEnv[match[1]] = match[3];
+    const match = line.match(/^([A-Z0-9_]+)=("?)([^\n]*?)\2\s*$/);
+    if (match && match[3]) fileEnv[match[1]] = match[3];
   }
 }
 
-// ── Step 2: get live Neon DB URLs ─────────────────────────────────────────
-const exportResult = spawnSync(
-  "node_modules\\.bin\\neon-env.cmd",
-  ["export"],
-  { encoding: "utf8", shell: true }
-);
+// ── Get DATABASE_URL from neon-env (OIDC) or neon connection-string ───────
+let databaseUrl = null;
 
-if (exportResult.status !== 0) {
-  console.error("neon-env export failed:", exportResult.stderr || exportResult.stdout);
+// Try neon-env export first
+const neonEnvResult = spawnSync("node_modules\\.bin\\neon-env.cmd", ["export"], {
+  encoding: "utf8",
+  shell: true,
+});
+if (neonEnvResult.status === 0) {
+  for (const line of neonEnvResult.stdout.split("\n")) {
+    const m = line.match(/^DATABASE_URL="([^"]+)"$/);
+    if (m) { databaseUrl = m[1]; break; }
+  }
+}
+
+// Fallback: neon CLI connection-string (uses cached OAuth)
+if (!databaseUrl) {
+  const connResult = spawnSync(
+    "node",
+    ["node_modules/.bin/neon", "connection-string",
+     "--project-id", "wandering-darkness-72642523",
+     "--branch", "production", "--pooled"],
+    { encoding: "utf8", shell: false }
+  );
+  if (connResult.status === 0) {
+    databaseUrl = connResult.stdout.trim();
+  }
+}
+
+if (!databaseUrl) {
+  console.error("Could not obtain DATABASE_URL from neon-env or neon CLI.");
   process.exit(1);
 }
 
-const neonEnv = {};
-for (const line of exportResult.stdout.split("\n")) {
-  const match = line.match(/^([A-Z0-9_]+)="([^"]*)"$/);
-  if (match) neonEnv[match[1]] = match[2];
-}
+const env = {
+  ...process.env,
+  ...fileEnv,
+  DATABASE_URL: databaseUrl,
+};
 
-// ── Merge: process.env < fileEnv < neonEnv ───────────────────────────────
-const env = { ...process.env, ...fileEnv, ...neonEnv };
-
-// ── Step 3: run prisma ────────────────────────────────────────────────────
+// ── Run prisma ────────────────────────────────────────────────────────────
 const args = process.argv.slice(2);
 if (args.length === 0) {
   console.error("Usage: node scripts/prisma-with-neon-env.mjs <prisma subcommand> [args...]");

@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import PostCard from "@/components/posts/PostCard";
 import Link from "next/link";
 import { siteConfig } from "@/config/site";
+import { getSessionUser } from "@/lib/dal";
 import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
@@ -46,12 +47,37 @@ async function getCategories() {
   });
 }
 
+async function getUserFavorites(userId: string) {
+  const favorites = await prisma.favorite.findMany({
+    where: { userId },
+    orderBy: { createdAt: "desc" },
+    take: 4,
+    include: {
+      post: {
+        select: {
+          id: true, title: true, slug: true, excerpt: true,
+          publishedAt: true, type: true, status: true,
+          category: { select: { name: true, slug: true } },
+          tags: { select: { tag: { select: { name: true, slug: true } } } },
+        },
+      },
+    },
+  });
+  return favorites
+    .filter((f) => f.post.status === "published")
+    .map((f) => ({ ...f.post, tags: f.post.tags.map((pt) => pt.tag) }));
+}
+
 export default async function HomePage() {
   const [recentPosts, allPosts, categories] = await Promise.all([
     getRecentPosts(),
     getAllPosts(),
     getCategories(),
   ]);
+
+  // Check session for personalized sections
+  const session = await getSessionUser();
+  const userFavorites = session ? await getUserFavorites(session.userId) : [];
 
   const flatRecent = recentPosts.map((p) => ({ ...p, tags: p.tags.map((pt) => pt.tag) }));
   const flatAll = allPosts.map((p) => ({ ...p, tags: p.tags.map((pt) => pt.tag) }));
@@ -121,6 +147,37 @@ export default async function HomePage() {
               </li>
             ))}
           </ul>
+        </section>
+      )}
+
+      {/* ── My Favorites (logged-in users only) ───────────────────────────── */}
+      {session && userFavorites.length > 0 && (
+        <section aria-label="My favorites" className="py-10 border-b border-stone-100">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="font-sans text-xs font-semibold uppercase tracking-widest text-stone-400">
+              My Favorites
+            </h2>
+            <Link
+              href="/favorites"
+              className="font-sans text-xs text-brand hover:text-brand-dark transition-colors duration-150"
+            >
+              View all →
+            </Link>
+          </div>
+          <div>
+            {userFavorites.map((post) => (
+              <PostCard
+                key={post.id}
+                title={post.title}
+                slug={post.slug}
+                excerpt={post.excerpt}
+                publishedAt={post.publishedAt}
+                categorySlug={post.category?.slug}
+                type={post.type}
+                tags={post.tags}
+              />
+            ))}
+          </div>
         </section>
       )}
 

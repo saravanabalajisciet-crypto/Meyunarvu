@@ -36,6 +36,12 @@ enum Role {
   admin
 }
 
+// CP3: notification event types
+enum NotificationType {
+  COMMENT_ON_POST
+  REPLY_TO_COMMENT
+}
+
 // ---------------------------------------------------------------------------
 // CP3: Users
 // ---------------------------------------------------------------------------
@@ -49,7 +55,67 @@ model User {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  posts Post[]
+  posts         Post[]
+  comments      Comment[]
+  favorites     Favorite[]
+  notifications Notification[]
+}
+
+// ---------------------------------------------------------------------------
+// CP3: Comments (threaded via parentId)
+// ---------------------------------------------------------------------------
+
+model Comment {
+  id        String   @id @default(uuid())
+  postId    String
+  userId    String
+  parentId  String?
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  post     Post      @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  parent   Comment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies  Comment[] @relation("CommentReplies")
+
+  @@index([postId])
+  @@index([userId])
+  @@index([parentId])
+}
+
+// ---------------------------------------------------------------------------
+// CP3: Favorites
+// ---------------------------------------------------------------------------
+
+model Favorite {
+  userId    String
+  postId    String
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  post Post @relation(fields: [postId], references: [id], onDelete: Cascade)
+
+  @@id([userId, postId])
+  @@index([userId])
+}
+
+// ---------------------------------------------------------------------------
+// CP3: Notifications
+// ---------------------------------------------------------------------------
+
+model Notification {
+  id        String           @id @default(uuid())
+  userId    String
+  type      NotificationType
+  payload   Json
+  read      Boolean          @default(false)
+  createdAt DateTime         @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, read])
+  @@index([userId, createdAt])
 }
 
 // ---------------------------------------------------------------------------
@@ -82,6 +148,8 @@ model Post {
   letterMeta       LetterMeta?
   linkedInMeta     LinkedInMeta?
   businessIdeaMeta BusinessIdeaMeta?
+  comments         Comment[]
+  favorites        Favorite[]
 }
 
 model Category {

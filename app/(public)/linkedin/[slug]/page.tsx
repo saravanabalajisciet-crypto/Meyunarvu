@@ -4,6 +4,9 @@ import { prisma } from "@/lib/prisma";
 import { markdownToHtml } from "@/lib/markdown";
 import { buildArticleMetadata } from "@/lib/metadata";
 import ShareBar from "@/components/posts/ShareBar";
+import FavoriteButton from "@/components/posts/FavoriteButton";
+import CommentSection from "@/components/posts/CommentSection";
+import { getSessionUser } from "@/lib/dal";
 import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
@@ -36,7 +39,10 @@ export default async function LinkedInPostPage({ params }: Props) {
   const post = await getLinkedInPost(slug);
   if (!post) notFound();
 
-  const html = post.content ? await markdownToHtml(post.content) : "";
+  const [html, session] = await Promise.all([
+    post.content ? markdownToHtml(post.content) : Promise.resolve(""),
+    getSessionUser(),
+  ]);
   const m = post.linkedInMeta;
   const date = post.publishedAt
     ? new Date(post.publishedAt).toLocaleDateString("en-IN", { year: "numeric", month: "long", day: "numeric" })
@@ -74,6 +80,19 @@ export default async function LinkedInPostPage({ params }: Props) {
       {html && <div className="prose" dangerouslySetInnerHTML={{ __html: html }} />}
 
       <ShareBar title={post.title} slug={post.slug} type="linkedin_post" />
+
+      {/* Favorite */}
+      <div className="mt-6 flex items-center gap-3">
+        <FavoriteButton postId={post.id} isLoggedIn={!!session} />
+      </div>
+
+      {/* Comments */}
+      <CommentSection
+        postId={post.id}
+        isLoggedIn={!!session}
+        currentUserId={session?.userId}
+        currentUserRole={session?.role}
+      />
     </article>
   );
 }
