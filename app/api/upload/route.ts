@@ -15,7 +15,7 @@ const MAX_SIZE_BYTES = 10 * 1024 * 1024; // 10 MB
 
 export async function POST(req: Request) {
   const session = await getSession();
-  if (!session?.isAdmin) {
+  if (!session || (session.role !== "admin" && session.role !== "author")) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

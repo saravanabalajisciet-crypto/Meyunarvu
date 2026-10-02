@@ -1,6 +1,7 @@
 // Meyunarvu — Prisma Schema
 // Phase 1: publishing workflow
 // Phase 2 tables (Manuscript, Chapter) are defined but have no UI yet.
+// CP3: User model, Role enum, Post.authorId added.
 
 generator client {
   provider = "prisma-client-js"
@@ -28,6 +29,29 @@ enum PostType {
   linkedin_post
 }
 
+// CP3: role hierarchy
+enum Role {
+  reader
+  author
+  admin
+}
+
+// ---------------------------------------------------------------------------
+// CP3: Users
+// ---------------------------------------------------------------------------
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  name         String
+  role         Role     @default(reader)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  posts Post[]
+}
+
 // ---------------------------------------------------------------------------
 // Core content tables
 // ---------------------------------------------------------------------------
@@ -47,6 +71,10 @@ model Post {
 
   categoryId String?
   category   Category? @relation(fields: [categoryId], references: [id])
+
+  // CP3: nullable so existing posts remain valid — set on creation going forward
+  authorId String?
+  author   User?   @relation(fields: [authorId], references: [id], onDelete: SetNull)
 
   tags             PostTag[]
   images           Image[]

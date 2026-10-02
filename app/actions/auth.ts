@@ -20,15 +20,22 @@ export async function loginAction(
     return { error: "Email and password are required." };
   }
 
-  const valid = await verifyCredentials(email, password);
-  if (!valid) {
+  // CP3: verifyCredentials now returns { userId, role } or null
+  const verified = await verifyCredentials(email, password);
+  if (!verified) {
     return { error: "Invalid email or password." };
   }
 
-  await createSession();
+  await createSession(verified.userId, verified.role);
+
+  // Redirect based on role:
+  //   admin  → /admin dashboard
+  //   author → /admin dashboard (author-side features in later CP3 tasks)
+  //   reader → / (public home; reader-specific features via client state)
+  const dest = verified.role === "reader" ? "/" : "/admin";
 
   // redirect() throws a special error — must be called outside try/catch
-  redirect("/admin");
+  redirect(dest);
 }
 
 export async function logoutAction(): Promise<void> {

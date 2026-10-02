@@ -1,41 +1,71 @@
 /**
- * Authentication helpers — single author.
+ * Authentication helpers — multi-user with env-var admin fallback.
  *
- * Credentials are read exclusively from environment variables:
- *   AUTH_ADMIN_EMAIL   — the admin email address
- *   AUTH_PASSWORD_HASH — bcrypt hash of the admin password
+ * CP3 verification order:
+ *   1. Look up the user by email in the DB (prisma User table).
+ *      If found, bcrypt-compare the stored passwordHash.
+ *   2. If no DB User record exists for this email, fall back to the env-var
+ *      admin credentials (AUTH_ADMIN_EMAIL + AUTH_PASSWORD_HASH).
+ *      This ensures the admin can log in even before the seed has been run.
  *
- * To change the password:
- *   1. Run:  node -e "require('bcryptjs').hash('newpassword',12).then(console.log)"
- *   2. Copy the printed hash into AUTH_PASSWORD_HASH in .env.local
- *      NOTE: write .env.local using Node.js (via write-env.mjs) — not PowerShell,
- *      because PowerShell expands $-prefixed tokens and corrupts bcrypt hashes.
- *   3. Restart the dev server.
+ * Returns { userId, role } on success, or null on failure.
  *
  * server-only: never import this on the client.
  */
 
 import "server-only";
 import bcrypt from "bcryptjs";
+import { prisma } from "@/lib/prisma";
+import type { Role } from "@prisma/client";
+
+export interface VerifiedUser {
+  userId: string;
+  role: Role;
+}
 
 export async function verifyCredentials(
   email: string,
   password: string
-): Promise<boolean> {
+): Promise<VerifiedUser | null> {
+  const normalizedEmail = email.toLowerCase().trim();
+
+  // ── Path 1: DB user ────────────────────────────────────────────────────
+  try {
+    const user = await prisma.user.findUnique({
+      where: { email: normalizedEmail },
+      select: { id: true, passwordHash: true, role: true },
+    });
+
+    if (user) {
+      const valid = await bcrypt.compare(password, user.passwordHash);
+      if (!valid) return null;
+      return { userId: user.id, role: user.role };
+    }
+  } catch (err) {
+    // DB unavailable or query failed — log and fall through to env-var path
+    console.error("[auth] DB lookup failed, falling back to env-var admin:", err);
+  }
+
+  // ── Path 2: env-var admin fallback ─────────────────────────────────────
+  // Used when the User table is empty (pre-seed) or the DB is unreachable.
   const adminEmail = process.env.AUTH_ADMIN_EMAIL;
   const passwordHash = process.env.AUTH_PASSWORD_HASH;
 
   if (!adminEmail || !passwordHash) {
     console.error(
-      "[auth] Missing env vars — AUTH_ADMIN_EMAIL or AUTH_PASSWORD_HASH not set. " +
-        "Check .env.local and ensure the hash was written with write-env.mjs."
+      "[auth] No DB user found and env-var fallback not configured. " +
+        "Set AUTH_ADMIN_EMAIL and AUTH_PASSWORD_HASH in .env.local."
     );
-    return false;
+    return null;
   }
 
-  if (email.toLowerCase().trim() !== adminEmail.toLowerCase().trim()) {
-    return false;
-  }
+  if (normalizedEmail !== adminEmail.toLowerCase().trim()) return null;
 
-  return bcrypt.compare(password, passwordHash);
+  const valid = await bcrypt.compare(password, passwordHash);
+  if (!valid) return null;
+
+  // No DB record yet — return a synthetic admin identity.
+  // userId is set to a stable placeholder derived from the email so the
+  // session is consistent across requests until the seed runs.
+  return { userId: `env-admin:${normalizedEmail}`, role: "admin" as Role };
 }

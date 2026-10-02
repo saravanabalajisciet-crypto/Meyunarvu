@@ -15,7 +15,7 @@ export async function GET(
 ) {
   const { id } = await ctx.params;
   const session = await getSession();
-  const isAdmin = !!session?.isAdmin;
+  const isAdmin = session?.role === "admin";
 
   const post = await prisma.post.findUnique({
     where: { id },
@@ -43,7 +43,7 @@ export async function PATCH(
   ctx: RouteContext<"/api/posts/[id]">
 ) {
   const session = await getSession();
-  if (!session?.isAdmin) {
+  if (!session || (session.role !== "admin" && session.role !== "author")) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -93,7 +93,7 @@ export async function DELETE(
   ctx: RouteContext<"/api/posts/[id]">
 ) {
   const session = await getSession();
-  if (!session?.isAdmin) {
+  if (!session || session.role !== "admin") {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   const { id } = await ctx.params;

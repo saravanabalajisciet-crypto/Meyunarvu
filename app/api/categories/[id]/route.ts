@@ -12,7 +12,7 @@ export async function PATCH(
   ctx: RouteContext<"/api/categories/[id]">
 ) {
   const session = await getSession();
-  if (!session?.isAdmin) {
+  if (!session || session.role !== "admin") {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -38,7 +38,7 @@ export async function DELETE(
   ctx: RouteContext<"/api/categories/[id]">
 ) {
   const session = await getSession();
-  if (!session?.isAdmin) {
+  if (!session || session.role !== "admin") {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

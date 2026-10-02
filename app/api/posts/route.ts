@@ -14,7 +14,7 @@ import type { PostType } from "@prisma/client";
 
 export async function GET(req: Request) {
   const session = await getSession();
-  const isAdmin = !!session?.isAdmin;
+  const isAdmin = session?.role === "admin";
 
   const { searchParams } = new URL(req.url);
   const categorySlug = searchParams.get("category");
@@ -65,7 +65,7 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   const session = await getSession();
-  if (!session?.isAdmin) {
+  if (!session || (session.role !== "admin" && session.role !== "author")) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -94,6 +94,8 @@ export async function POST(req: Request) {
       type,
       status: "draft",
       categoryId: categoryId ?? null,
+      // CP3: associate post with the creating user (null for env-admin fallback)
+      authorId: session.userId.startsWith("env-admin:") ? null : session.userId,
       tags: {
         create: (tagIds as string[]).map((tagId: string) => ({ tagId })),
       },
