@@ -11,6 +11,7 @@ import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 
 export async function GET(req: Request) {
+  try {
   const session = await getSession();
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -39,4 +40,12 @@ export async function GET(req: Request) {
   ]);
 
   return NextResponse.json({ notifications, total, page, limit, unreadCount });
-}
+
+  } catch (err) {
+    console.error("[GET /api/notifications]", err);
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : "Internal server error" },
+      { status: 500 }
+    );
+  }
+

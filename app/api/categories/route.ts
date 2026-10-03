@@ -9,14 +9,24 @@ import { getSession } from "@/lib/session";
 import { makeSlug } from "@/lib/slugify";
 
 export async function GET() {
+  try {
   const categories = await prisma.category.findMany({
     orderBy: { order: "asc" },
     include: { _count: { select: { posts: true } } },
   });
   return NextResponse.json(categories);
-}
+
+  } catch (err) {
+    console.error("[GET /api/categories]", err);
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : "Internal server error" },
+      { status: 500 }
+    );
+  }
+
 
 export async function POST(req: Request) {
+  try {
   const session = await getSession();
   if (!session || session.role !== "admin") {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -39,4 +49,12 @@ export async function POST(req: Request) {
   });
 
   return NextResponse.json(category, { status: 201 });
-}
+
+  } catch (err) {
+    console.error("[POST /api/categories]", err);
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : "Internal server error" },
+      { status: 500 }
+    );
+  }
+

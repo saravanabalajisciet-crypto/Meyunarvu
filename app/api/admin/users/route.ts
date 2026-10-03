@@ -16,6 +16,7 @@ const BCRYPT_ROUNDS = 12;
 const MIN_PASSWORD_LENGTH = 8;
 
 export async function GET() {
+  try {
   const session = await getSession();
   if (!session || session.role !== "admin") {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -35,9 +36,18 @@ export async function GET() {
   });
 
   return NextResponse.json({ users });
-}
+
+  } catch (err) {
+    console.error("[GET /api/admin/users]", err);
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : "Internal server error" },
+      { status: 500 }
+    );
+  }
+
 
 export async function POST(req: Request) {
+  try {
   const session = await getSession();
   if (!session || session.role !== "admin") {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -102,4 +112,12 @@ export async function POST(req: Request) {
   });
 
   return NextResponse.json({ user }, { status: 201 });
-}
+
+  } catch (err) {
+    console.error("[POST /api/admin/users]", err);
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : "Internal server error" },
+      { status: 500 }
+    );
+  }
+

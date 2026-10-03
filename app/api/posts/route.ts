@@ -13,6 +13,7 @@ import { extractExcerpt } from "@/lib/markdown";
 import type { PostType } from "@prisma/client";
 
 export async function GET(req: Request) {
+  try {
   const session = await getSession();
   const isAdmin = session?.role === "admin";
 
@@ -61,9 +62,18 @@ export async function GET(req: Request) {
   }));
 
   return NextResponse.json({ posts: result, total, page, limit });
-}
+
+  } catch (err) {
+    console.error("[GET /api/posts]", err);
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : "Internal server error" },
+      { status: 500 }
+    );
+  }
+
 
 export async function POST(req: Request) {
+  try {
   const session = await getSession();
   if (!session || (session.role !== "admin" && session.role !== "author")) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -104,4 +114,12 @@ export async function POST(req: Request) {
   });
 
   return NextResponse.json(post, { status: 201 });
-}
+
+  } catch (err) {
+    console.error("[POST /api/posts]", err);
+    return NextResponse.json(
+      { error: err instanceof Error ? err.message : "Internal server error" },
+      { status: 500 }
+    );
+  }
+
