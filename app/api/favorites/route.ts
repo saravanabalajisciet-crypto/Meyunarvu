@@ -8,6 +8,7 @@ import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 
 export async function GET(req: Request) {
+  try {
   const session = await getSession();
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -52,9 +53,13 @@ export async function GET(req: Request) {
     }));
 
   return NextResponse.json({ favorites: publishedFavorites, total, page, limit });
+  } catch (err) {
+    console.error("[GET /api/favorites]", err);
+    return NextResponse.json({ error: err instanceof Error ? err.message : "Internal server error" }, { status: 500 });
+  }
 }
-
 export async function POST(req: Request) {
+  try {
   const session = await getSession();
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -84,4 +89,8 @@ export async function POST(req: Request) {
   });
 
   return NextResponse.json({ favorite }, { status: 201 });
+  } catch (err) {
+    console.error("[POST /api/favorites]", err);
+    return NextResponse.json({ error: err instanceof Error ? err.message : "Internal server error" }, { status: 500 });
+  }
 }

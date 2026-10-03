@@ -37,6 +37,7 @@ function postHref(
 }
 
 export async function GET(req: Request) {
+  try {
   const { searchParams } = new URL(req.url);
   const postId = searchParams.get("postId");
 
@@ -69,9 +70,13 @@ export async function GET(req: Request) {
   });
 
   return NextResponse.json({ comments });
+  } catch (err) {
+    console.error("[GET /api/comments]", err);
+    return NextResponse.json({ error: err instanceof Error ? err.message : "Internal server error" }, { status: 500 });
+  }
 }
-
 export async function POST(req: Request) {
+  try {
   const session = await getSession();
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -230,4 +235,8 @@ export async function POST(req: Request) {
   }
 
   return NextResponse.json({ comment }, { status: 201 });
+  } catch (err) {
+    console.error("[POST /api/comments]", err);
+    return NextResponse.json({ error: err instanceof Error ? err.message : "Internal server error" }, { status: 500 });
+  }
 }
