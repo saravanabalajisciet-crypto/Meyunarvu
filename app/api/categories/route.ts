@@ -23,7 +23,7 @@ export async function GET() {
       { status: 500 }
     );
   }
-
+}
 
 export async function POST(req: Request) {
   try {
@@ -57,4 +57,4 @@ export async function POST(req: Request) {
       { status: 500 }
     );
   }
-
+}
