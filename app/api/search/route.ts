@@ -1,15 +1,21 @@
 /**
  * GET /api/search?q=<query>&page=<n>&limit=<n>
  *
- * Public endpoint — no auth required.
- * Searches published posts by title (case-insensitive partial match).
- * Never returns drafts, manuscripts, or private content.
+ * Private endpoint — requires an authenticated session (also enforced by
+ * proxy.ts). Searches published posts by title (case-insensitive partial
+ * match). Never returns drafts, manuscripts, or private content.
  */
 
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getSession } from "@/lib/session";
 
 export async function GET(req: Request) {
+  const session = await getSession();
+  if (!session) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const { searchParams } = new URL(req.url);
   const q = (searchParams.get("q") ?? "").trim();
   const page = Math.max(1, parseInt(searchParams.get("page") ?? "1"));

@@ -188,7 +188,7 @@ export default function HeaderActions({ user }: Props) {
                       type="button"
                       onClick={async () => {
                         await fetch("/api/auth/logout", { method: "POST" });
-                        window.location.href = "/";
+                        window.location.href = "/login";
                       }}
                       className="w-full flex items-center gap-2 px-4 py-2 text-sm font-sans text-stone-500 hover:bg-stone-50 hover:text-stone-700 transition-colors duration-150"
                     >

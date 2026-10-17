@@ -38,6 +38,12 @@ function postHref(
 
 export async function GET(req: Request) {
   try {
+  // Private endpoint — requires an authenticated session (also enforced by proxy.ts)
+  const session = await getSession();
+  if (!session) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const { searchParams } = new URL(req.url);
   const postId = searchParams.get("postId");
 

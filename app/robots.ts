@@ -6,9 +6,9 @@ export default function robots(): MetadataRoute.Robots {
     rules: [
       {
         userAgent: "*",
-        allow: "/",
-        // Private areas — manuscripts (Phase 2) and admin must never be indexed
-        disallow: ["/admin/", "/manuscripts/", "/api/"],
+        // Content is private — block every path except the login page
+        allow: ["/login"],
+        disallow: ["/"],
       },
     ],
     sitemap: `${siteConfig.url}/sitemap.xml`,
