@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import LoginForm from "./LoginForm";
 import { siteConfig } from "@/config/site";
 
@@ -20,6 +21,16 @@ export default function LoginPage() {
         </div>
 
         <LoginForm />
+
+        <p className="mt-6 text-center text-sm text-stone-500">
+          Don&apos;t have an account?{" "}
+          <Link
+            href="/signup"
+            className="font-medium text-brand hover:text-brand-dark"
+          >
+            Sign up
+          </Link>
+        </p>
       </div>
     </div>
   );

@@ -1,0 +1,27 @@
+import type { Metadata } from "next";
+import Link from "next/link";
+import SignupForm from "./SignupForm";
+import { siteConfig } from "@/config/site";
+
+export const metadata: Metadata = {
+  title: `Sign up — ${siteConfig.name}`,
+  robots: { index: false },
+};
+
+export default function SignupPage() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-white px-4">
+      <div className="w-full max-w-sm">
+        {/* Wordmark */}
+        <div className="mb-10 text-center">
+          <span className="text-2xl font-serif font-semibold tracking-tight text-stone-900">
+            {siteConfig.name}
+          </span>
+          <p className="mt-1 text-sm text-stone-500">Create your account</p>
+        </div>
+
+        <SignupForm />
+      </div>
+    </div>
+  );
+}

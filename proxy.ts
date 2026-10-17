@@ -55,8 +55,8 @@ export async function proxy(request: NextRequest) {
   const isPublicApi =
     pathname === "/api/auth/login" || pathname === "/api/auth/logout";
 
-  // 1) Authenticated user visiting /login → send them to their home
-  if (isLoginPage && isAuthenticated) {
+  // 1) Authenticated user visiting /login or /signup → send them to their home
+  if ((isLoginPage || isSignupPage) && isAuthenticated) {
     const dest = isStaff ? "/admin" : "/";
     return NextResponse.redirect(new URL(dest, request.nextUrl));
   }
