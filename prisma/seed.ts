@@ -1,10 +1,20 @@
-/**
+﻿/**
  * Seed: categories + admin User row.
  *
  * Run:  node scripts/prisma-with-neon-env.mjs db seed
  *   or: npx tsx prisma/seed.ts  (with DATABASE_URL in env)
  *
- * Categories are upserted by slug — safe to re-run.
+ * Categories are upserted safely — handles both slug and name uniqueness
+ * constraints. Strategy:
+ *   1. Try upsert by slug (updates if slug exists)
+ *   2. If that fails due to name collision, update the existing name-matched row
+ *      to use the new slug, then upsert by slug
+ *
+ * This handles the case where the DB has "Business Ideas" with slug "ideas"
+ * and we want to move it to slug "business-ideas".
+ *
+ * Old categories (thirukkural, letters, ideas, linkedin, notes) are left
+ * untouched — posts keep their categoryId. Clean up via admin if desired.
  *
  * Admin user (CP3):
  *   - Reads AUTH_ADMIN_EMAIL and AUTH_PASSWORD_HASH from the environment.
@@ -22,38 +32,63 @@ const prisma = new PrismaClient();
 // Configurable seed data
 // ---------------------------------------------------------------------------
 
-// ---------------------------------------------------------------------------
-// Configurable seed data
-// ---------------------------------------------------------------------------
-
 // Content types are modelled as Category rows (no schema migration needed).
-// Upserted by slug — re-running the seed creates the new types alongside any
-// pre-existing categories without deleting them, so existing posts keep their
-// category assignments. Old categories can be cleaned up manually via admin.
+// Upserted by slug — re-running the seed is safe and idempotent.
 const SEED_CATEGORIES = [
-  { name: "Kids Bedtime Stories", slug: "kids-stories", description: "Bedtime stories for children", order: 1 },
-  { name: "Short Stories", slug: "short-stories", description: "Short fiction and storytelling", order: 2 },
-  { name: "Leadership Articles", slug: "leadership", description: "Leadership and management articles", order: 3 },
-  { name: "Essays", slug: "essays", description: "Long-form essays and reflections", order: 4 },
-  { name: "Business Ideas", slug: "business-ideas", description: "Ideas free for anyone to build", order: 5 },
-  { name: "Others", slug: "others", description: "Other writing and observations", order: 6 },
+  { name: "Kids Bedtime Stories", slug: "kids-stories",  description: "Bedtime stories for children",          order: 1 },
+  { name: "Short Stories",        slug: "short-stories", description: "Short fiction and storytelling",         order: 2 },
+  { name: "Leadership Articles",  slug: "leadership",    description: "Leadership and management articles",     order: 3 },
+  { name: "Essays",               slug: "essays",         description: "Long-form essays and reflections",       order: 4 },
+  { name: "Business Ideas",       slug: "business-ideas", description: "Ideas free for anyone to build",        order: 5 },
+  { name: "Others",               slug: "others",         description: "Other writing and observations",        order: 6 },
 ];
 
 // ---------------------------------------------------------------------------
 // Seed
 // ---------------------------------------------------------------------------
 
-async function main() {
-  // ── Categories ────────────────────────────────────────────────────────────
-  console.log("Seeding categories…");
-  for (const cat of SEED_CATEGORIES) {
+async function upsertCategory(cat: {
+  name: string;
+  slug: string;
+  description: string;
+  order: number;
+}) {
+  // Step 1: try normal upsert by slug
+  try {
     await prisma.category.upsert({
       where: { slug: cat.slug },
       update: { name: cat.name, description: cat.description, order: cat.order },
       create: cat,
     });
+    return;
+  } catch (err: unknown) {
+    // P2002 = unique constraint violation (name collision with a different slug)
+    const code = (err as { code?: string }).code;
+    if (code !== "P2002") throw err;
   }
-  console.log(`  ✓ ${SEED_CATEGORIES.length} categories seeded`);
+
+  // Step 2: name collision — a row with this name exists but with a different slug.
+  // Update that row's slug to our target slug, then the upsert will succeed.
+  await prisma.category.updateMany({
+    where: { name: cat.name },
+    data: { slug: cat.slug, description: cat.description, order: cat.order },
+  });
+  // Now upsert by slug should succeed (the slug now matches)
+  await prisma.category.upsert({
+    where: { slug: cat.slug },
+    update: { name: cat.name, description: cat.description, order: cat.order },
+    create: cat,
+  });
+}
+
+async function main() {
+  // ── Categories ────────────────────────────────────────────────────────────
+  console.log("Seeding categories…");
+  for (const cat of SEED_CATEGORIES) {
+    await upsertCategory(cat);
+    console.log(`  ✓ ${cat.name} (/${cat.slug})`);
+  }
+  console.log(`  ${SEED_CATEGORIES.length} categories seeded`);
 
   // ── Admin User ────────────────────────────────────────────────────────────
   console.log("\nSeeding admin user…");
@@ -74,7 +109,6 @@ async function main() {
   const user = await prisma.user.upsert({
     where: { email: email.toLowerCase().trim() },
     update: {
-      // Keep hash and role in sync with env vars on every seed run.
       passwordHash,
       role: "admin",
       name,
