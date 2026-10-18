@@ -126,9 +126,9 @@ export default async function HomePage() {
 
       {/* ── Categories ────────────────────────────────────────────────────── */}
       {nonEmptyCategories.length > 0 && (
-        <section aria-label="Browse by category" className="py-10 border-b border-stone-100">
+        <section aria-label="Browse by content type" className="py-10 border-b border-stone-100">
           <h2 className="font-sans text-xs font-semibold uppercase tracking-widest text-stone-400 mb-6">
-            Browse by Category
+            Browse by Content Type
           </h2>
           <ul className="grid grid-cols-2 sm:grid-cols-3 gap-3">
             {nonEmptyCategories.map((cat) => (

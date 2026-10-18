@@ -198,7 +198,7 @@ export default function PostEditor({
     if (postType === "linkedin_post") return `/linkedin/${postSlug}`;
     // article — use category slug if available
     const cat = categories.find((c) => c.id === catId);
-    return cat ? `/${cat.slug}/${postSlug}` : `/essays/${postSlug}`;
+    return cat ? `/${cat.slug}/${postSlug}` : `/others/${postSlug}`;
   }
 
   // ── Publish / Unpublish ───────────────────────────────────────────────────
@@ -283,16 +283,23 @@ export default function PostEditor({
             <option value="linkedin_post">LinkedIn Post</option>
           </Select>
 
-          <Select
-            label="Category"
-            value={categoryId}
-            onChange={(e) => handleCategory(e.target.value)}
-            placeholder="— No category —"
-          >
-            {categories.map((c) => (
-              <option key={c.id} value={c.id}>{c.name}</option>
-            ))}
-          </Select>
+          <div>
+            <Select
+              label="Content Type"
+              value={categoryId}
+              onChange={(e) => handleCategory(e.target.value)}
+              placeholder="— No content type —"
+            >
+              {categories.map((c) => (
+                <option key={c.id} value={c.id}>{c.name}</option>
+              ))}
+            </Select>
+            {type === "article" && !categoryId && (
+              <p className="mt-1 text-xs text-amber-600">
+                Content type is required for article posts.
+              </p>
+            )}
+          </div>
         </div>
 
         {/* Type-specific meta */}

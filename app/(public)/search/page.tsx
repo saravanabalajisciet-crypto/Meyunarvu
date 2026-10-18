@@ -13,7 +13,7 @@ function postHref(type: PostType, categorySlug: string | null | undefined, slug:
   if (type === "letter") return `/letters/${slug}`;
   if (type === "business_idea") return `/ideas/${slug}`;
   if (type === "linkedin_post") return `/linkedin/${slug}`;
-  return `/${categorySlug ?? "essays"}/${slug}`;
+  return `/${categorySlug ?? "others"}/${slug}`;
 }
 
 function typeLabel(type: PostType): string {

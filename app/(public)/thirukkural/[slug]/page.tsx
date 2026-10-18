@@ -38,7 +38,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function KuralPage({ params }: Props) {
   const { slug } = await params;
   const post = await getKural(slug);
-  if (!post || !post.thirukkuralMeta) notFound();
+  if (!post) notFound();
 
   const m = post.thirukkuralMeta;
   const [commentaryHtml, session] = await Promise.all([
@@ -77,17 +77,24 @@ export default async function KuralPage({ params }: Props) {
           )}
         </header>
 
-        {/* Bilingual couplet + commentary */}
-        <KuralDetail
-          kuralNumber={m.kuralNumber}
-          tamilCouplet={m.tamilCouplet}
-          englishTranslation={m.englishTranslation}
-          tamilCommentary={m.tamilCommentary}
-          englishCommentary={m.englishCommentary}
-        />
+        {/* Bilingual couplet + commentary (only when meta exists) */}
+        {m && (
+          <KuralDetail
+            kuralNumber={m.kuralNumber}
+            tamilCouplet={m.tamilCouplet}
+            englishTranslation={m.englishTranslation}
+            tamilCommentary={m.tamilCommentary}
+            englishCommentary={m.englishCommentary}
+          />
+        )}
 
-        {/* Optional extra prose content */}
-        {commentaryHtml && (
+        {/* If meta is missing, render the post content as the main body */}
+        {!m && commentaryHtml && (
+          <div className="prose" dangerouslySetInnerHTML={{ __html: commentaryHtml }} />
+        )}
+
+        {/* Optional extra prose content (shown below the couplet when meta exists) */}
+        {m && commentaryHtml && (
           <div
             className="prose mt-10 pt-10 border-t border-stone-100"
             dangerouslySetInnerHTML={{ __html: commentaryHtml }}

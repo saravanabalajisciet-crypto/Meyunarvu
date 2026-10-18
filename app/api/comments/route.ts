@@ -33,7 +33,7 @@ function postHref(
   if (type === "letter") return `/letters/${slug}`;
   if (type === "business_idea") return `/ideas/${slug}`;
   if (type === "linkedin_post") return `/linkedin/${slug}`;
-  return `/${categorySlug ?? "essays"}/${slug}`;
+  return `/${categorySlug ?? "others"}/${slug}`;
 }
 
 export async function GET(req: Request) {

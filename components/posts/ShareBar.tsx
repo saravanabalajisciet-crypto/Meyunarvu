@@ -16,7 +16,7 @@ function buildUrl(type: string, categorySlug: string | null | undefined, slug: s
   if (type === "letter") return `${base}/letters/${slug}`;
   if (type === "business_idea") return `${base}/ideas/${slug}`;
   if (type === "linkedin_post") return `${base}/linkedin/${slug}`;
-  return `${base}/${categorySlug ?? "essays"}/${slug}`;
+  return `${base}/${categorySlug ?? "others"}/${slug}`;
 }
 
 export default function ShareBar({ title, slug, type = "article", categorySlug }: ShareBarProps) {

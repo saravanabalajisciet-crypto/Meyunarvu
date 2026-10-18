@@ -22,13 +22,21 @@ const prisma = new PrismaClient();
 // Configurable seed data
 // ---------------------------------------------------------------------------
 
+// ---------------------------------------------------------------------------
+// Configurable seed data
+// ---------------------------------------------------------------------------
+
+// Content types are modelled as Category rows (no schema migration needed).
+// Upserted by slug — re-running the seed creates the new types alongside any
+// pre-existing categories without deleting them, so existing posts keep their
+// category assignments. Old categories can be cleaned up manually via admin.
 const SEED_CATEGORIES = [
-  { name: "Essays", slug: "essays", description: "Long-form essays and reflections", order: 1 },
-  { name: "Thirukkural", slug: "thirukkural", description: "Thirukkural with Tamil and English", order: 2 },
-  { name: "Letters", slug: "letters", description: "Open letters and correspondence", order: 3 },
-  { name: "Business Ideas", slug: "ideas", description: "Ideas free for anyone to build", order: 4 },
-  { name: "LinkedIn", slug: "linkedin", description: "Republished LinkedIn posts", order: 5 },
-  { name: "Notes", slug: "notes", description: "Short notes and observations", order: 6 },
+  { name: "Kids Bedtime Stories", slug: "kids-stories", description: "Bedtime stories for children", order: 1 },
+  { name: "Short Stories", slug: "short-stories", description: "Short fiction and storytelling", order: 2 },
+  { name: "Leadership Articles", slug: "leadership", description: "Leadership and management articles", order: 3 },
+  { name: "Essays", slug: "essays", description: "Long-form essays and reflections", order: 4 },
+  { name: "Business Ideas", slug: "business-ideas", description: "Ideas free for anyone to build", order: 5 },
+  { name: "Others", slug: "others", description: "Other writing and observations", order: 6 },
 ];
 
 // ---------------------------------------------------------------------------
