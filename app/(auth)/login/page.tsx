@@ -1,10 +1,10 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import Link from "next/link";
 import LoginForm from "./LoginForm";
 import { siteConfig } from "@/config/site";
 
 export const metadata: Metadata = {
-  title: `Sign in — ${siteConfig.name}`,
+  title: "Sign in",
   robots: { index: false },
 };
 
@@ -17,7 +17,7 @@ export default function LoginPage() {
           <span className="text-2xl font-serif font-semibold tracking-tight text-stone-900">
             {siteConfig.name}
           </span>
-          <p className="mt-1 text-sm text-stone-500">Author sign in</p>
+          <p className="mt-1 text-sm text-stone-500">Sign in to your account</p>
         </div>
 
         <LoginForm />

@@ -1,10 +1,10 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import Link from "next/link";
 import SignupForm from "./SignupForm";
 import { siteConfig } from "@/config/site";
 
 export const metadata: Metadata = {
-  title: `Sign up — ${siteConfig.name}`,
+  title: "Sign up",
   robots: { index: false },
 };
 
