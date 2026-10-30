@@ -57,7 +57,7 @@ export default async function ArticlePage({ params }: Props) {
   const tags = post.tags.map((pt) => pt.tag);
 
   return (
-    <div className="mx-auto max-w-4xl px-4 sm:px-6">
+    <div className="mx-auto max-w-4xl px-4 sm:px-6 book-surface reading-safe">
       <article className="py-12 sm:py-16">
 
         {/* Breadcrumb */}
@@ -65,26 +65,29 @@ export default async function ArticlePage({ params }: Props) {
           <div className="mb-8">
             <Link
               href={`/${post.category.slug}`}
-              className="text-xs font-sans font-semibold text-brand uppercase tracking-widest hover:text-brand-dark transition-colors duration-150"
+              className="inline-flex items-center min-h-[44px] text-xs font-sans font-semibold text-brand uppercase tracking-widest hover:text-brand-dark transition-colors duration-150"
             >
               {post.category.name}
             </Link>
           </div>
         )}
 
-        {/* Title */}
-        <header className="mb-8 max-w-2xl">
-          <h1 className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-stone-900 leading-tight tracking-tight mb-5">
+        {/* Book header */}
+        <header className="max-w-2xl mx-auto text-center sm:text-left mb-8">
+          <p className="font-sans text-xs font-semibold text-brand uppercase tracking-widest mb-3">
+            {post.category?.name ?? "Article"}
+          </p>
+          <h1 className="font-serif text-3xl sm:text-4xl font-bold leading-tight tracking-tight mb-5">
             {post.title}
           </h1>
 
           {post.excerpt && (
-            <p className="font-serif text-xl text-stone-500 leading-relaxed mb-5">
+            <p className="font-serif text-lg text-stone-500 italic leading-relaxed mt-3">
               {post.excerpt}
             </p>
           )}
 
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 mt-5">
             {date && (
               <time
                 dateTime={post.publishedAt?.toISOString()}
@@ -100,6 +103,13 @@ export default async function ArticlePage({ params }: Props) {
           </div>
         </header>
 
+        {/* Decorative divider */}
+        <div className="flex items-center gap-4 my-10">
+          <div className="flex-1 h-px bg-stone-200" />
+          <span className="text-stone-300 text-xl select-none" aria-hidden>❧</span>
+          <div className="flex-1 h-px bg-stone-200" />
+        </div>
+
         {/* Featured image */}
         {post.images[0] && (
           <figure className="mb-10 -mx-4 sm:mx-0 sm:rounded-lg overflow-hidden">
@@ -114,7 +124,7 @@ export default async function ArticlePage({ params }: Props) {
 
         {/* Body */}
         {html ? (
-          <div className="prose" dangerouslySetInnerHTML={{ __html: html }} />
+          <div className="prose prose-book" dangerouslySetInnerHTML={{ __html: html }} />
         ) : (
           <p className="font-sans text-stone-400 text-sm italic py-8">No content yet.</p>
         )}

@@ -30,7 +30,7 @@ export default function PostRow({ id, title, status, type, updatedAt, categoryNa
     <div className="flex items-center gap-3 px-4 py-3 hover:bg-stone-50 transition-colors duration-100">
       <div className="min-w-0 flex-1">
         <Link
-          href={`/admin/posts/${id}/edit`}
+          href={`/admin/posts/${id}`}
           className="font-sans text-sm font-medium text-stone-800 hover:text-brand truncate block transition-colors duration-150"
         >
           {title}

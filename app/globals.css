@@ -250,3 +250,103 @@ body {
   color: var(--color-brand);
   background: var(--color-brand-light);
 }
+
+/* ─── Book reading UI ───────────────────────────────────────────────────────── */
+
+/* Drop cap on first paragraph of prose */
+.prose-book > p:first-of-type::first-letter {
+  font-family: var(--font-serif);
+  font-size: 3.5em;
+  font-weight: 700;
+  float: left;
+  line-height: 0.8;
+  margin-right: 0.1em;
+  margin-top: 0.05em;
+  color: var(--color-brand);
+}
+
+/* Book-style chapter headings */
+.prose-book h2 {
+  text-align: center;
+  border-bottom: none;
+  padding-bottom: 0;
+  margin-top: 3em;
+  font-size: 1.35rem;
+  letter-spacing: 0.04em;
+}
+
+.prose-book h2::before,
+.prose-book h2::after {
+  content: " · ";
+  color: var(--color-brand);
+  font-weight: 400;
+}
+
+/* Comfortable paragraph spacing for long reads */
+.prose-book p {
+  margin-bottom: 1.75em;
+  text-align: justify;
+  hyphens: auto;
+}
+
+/* Mobile: disable justify and hyphens below sm */
+@media (max-width: 639px) {
+  .prose-book p {
+    text-align: left;
+    hyphens: none;
+  }
+}
+
+/* Slightly warmer reading background option */
+.book-surface {
+  background-color: #fdfcfb;
+}
+
+/* ─── Mobile reading experience ─────────────────────────────────────────────── */
+
+/* Safe reading padding — respects device safe areas */
+.reading-safe {
+  padding-left: max(1rem, env(safe-area-inset-left));
+  padding-right: max(1rem, env(safe-area-inset-right));
+}
+
+/* 320px — minimum supported width */
+@media (max-width: 359px) {
+  .prose {
+    font-size: 0.9375rem; /* 15px — slightly smaller on tiny screens */
+    line-height: 1.75;
+  }
+  .prose h1 { font-size: 1.5rem; }
+  .prose h2 { font-size: 1.2rem; }
+  .prose h3 { font-size: 1.05rem; }
+}
+
+/* 360–414px — standard phone widths */
+@media (min-width: 360px) and (max-width: 639px) {
+  .prose {
+    font-size: 1rem; /* 16px */
+    line-height: 1.8;
+  }
+}
+
+/* Prevent table overflow on mobile */
+.prose table {
+  display: block;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Images never overflow */
+.prose img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Touch-friendly min tap target */
+.touch-target {
+  min-height: 44px;
+  min-width: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}

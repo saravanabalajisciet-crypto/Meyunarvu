@@ -47,7 +47,7 @@ export default async function KuralPage({ params }: Props) {
   ]);
 
   return (
-    <div className="mx-auto max-w-4xl px-4 sm:px-6">
+    <div className="mx-auto max-w-4xl px-4 sm:px-6 book-surface reading-safe">
       <article className="py-12 sm:py-16">
 
         {/* Back link */}
@@ -90,13 +90,13 @@ export default async function KuralPage({ params }: Props) {
 
         {/* If meta is missing, render the post content as the main body */}
         {!m && commentaryHtml && (
-          <div className="prose" dangerouslySetInnerHTML={{ __html: commentaryHtml }} />
+          <div className="prose prose-book" dangerouslySetInnerHTML={{ __html: commentaryHtml }} />
         )}
 
         {/* Optional extra prose content (shown below the couplet when meta exists) */}
         {m && commentaryHtml && (
           <div
-            className="prose mt-10 pt-10 border-t border-stone-100"
+            className="prose prose-book mt-10 pt-10 border-t border-stone-100"
             dangerouslySetInnerHTML={{ __html: commentaryHtml }}
           />
         )}

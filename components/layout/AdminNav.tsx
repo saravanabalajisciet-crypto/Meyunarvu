@@ -38,7 +38,7 @@ const navItems = [
   },
   {
     href: "/admin/categories",
-    label: "Categories",
+    label: "Content Types",
     exact: false,
     icon: (
       <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75} aria-hidden>
