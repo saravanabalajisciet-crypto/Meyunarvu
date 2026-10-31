@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+﻿import { notFound } from "next/navigation";
 import { cache } from "react";
 import { prisma } from "@/lib/prisma";
 import { markdownToHtml } from "@/lib/markdown";
@@ -10,6 +10,7 @@ import Badge from "@/components/ui/Badge";
 import Link from "next/link";
 import { getSessionUser } from "@/lib/dal";
 import type { Metadata } from "next";
+import NarrationBar from "@/components/posts/NarrationBar";
 
 export const dynamic = "force-dynamic";
 
@@ -102,6 +103,11 @@ export default async function ArticlePage({ params }: Props) {
             ))}
           </div>
         </header>
+
+        {/* Narration player — reads story content, no admin */}
+        {html && (
+          <NarrationBar storyHtml={html} title={post.title} />
+        )}
 
         {/* Decorative divider */}
         <div className="flex items-center gap-4 my-10">
